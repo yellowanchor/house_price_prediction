@@ -1,59 +1,105 @@
-# 房价预测项目
+# House Price Prediction - Kaggle Competition
 
-基于机器学习的房价预测模型，使用 XGBoost 和 MLP（多层感知机）进行预测，通过 K 折交叉验证评估模型性能。
+房价预测模型 - Kaggle House Prices 竞赛标准实现
+
+## 竞赛信息
+
+- **竞赛名称**: House Prices - Advanced Regression Techniques
+- **评估指标**: RMSE (Root Mean Squared Error) on log-transformed target
+- **Kaggle链接**: https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques
 
 ## 项目结构
 
 ```
 house_price_prediction/
-├── train.py              # 训练脚本
+├── train.py              # 主训练脚本
 ├── requirements.txt      # 依赖包
-├── model_results.csv     # 模型评估结果
-└── README.md            # 项目说明
+├── README.md            # 项目说明
+├── model.pkl            # 训练好的模型
+├── oof_predictions.csv  # 交叉验证预测结果
+├── submission.csv       # Kaggle提交文件
+└── model_results.csv    # 模型评估结果
 ```
 
-## 功能特性
+## 模型架构
 
-- 使用 KaggleHub 获取房价预测数据集
-- XGBoost 梯度提升回归模型
-- MLP 多层感知机神经网络
-- 5 折交叉验证
-- RMSE（均方根误差）评估指标
-- 模型集成预测
+### 集成模型
+- **XGBoost**: 梯度提升决策树
+- **LightGBM**: 基于直方图的梯度提升
+- **集成策略**: 简单平均
 
-## 安装
+### 关键参数
+- K-Fold: 5折交叉验证
+- Early Stopping: 100轮
+- Learning Rate: 0.02
+- Estimators: 2000
+- Max Depth: 4
+
+## 特征工程
+
+1. **缺失值处理**: 数值用中位数，类别用众数
+2. **特征组合**:
+   - TotalSF: 总面积 (地下室 + 1层 + 2层)
+   - TotalBath: 总卫生间数
+   - HouseAge/RemodAge: 房龄
+   - GarageAreaPerCar: 每车位车库面积
+3. **目标变量**: log1p 变换（竞赛标准）
+
+## 评估结果
+
+| 指标 | 值 |
+|------|-----|
+| CV RMSE (log scale) | ~0.12-0.14 |
+| OOF RMSE (原始尺度) | 模型相关 |
+
+## 使用方法
+
+### 1. 安装依赖
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## 使用方法
+### 2. 准备数据
+
+将 Kaggle 下载的 `train.csv` 和 `test.csv` 放在项目根目录。
+
+### 3. 训练模型
 
 ```bash
 python train.py
 ```
 
-## 模型说明
+### 4. 生成提交文件
 
-### XGBoost
-- 强大的梯度提升算法
-- 自动处理缺失值
-- 支持并行训练
+运行后会自动生成 `submission.csv` 文件，直接上传到 Kaggle 即可。
 
-### MLP (多层感知机)
-- 深度神经网络
-- ReLU 激活函数
-- Adam 优化器
-- 早停策略防止过拟合
+## 文件说明
 
-### 集成方法
-- XGBoost 和 MLP 预测值简单平均
-- 结合两种模型的优势
+### train.py
+- `load_data()`: 加载训练集和测试集
+- `feature_engineering()`: 特征工程
+- `HousePriceModel`: 模型训练类
+- `main()`: 主程序入口
 
-## 评估指标
+### submission.csv
+Kaggle 提交格式:
+```
+Id,SalePrice
+1461,208500.00
+...
+```
 
-- **RMSE (Root Mean Square Error)**: 均方根误差，值越小表示模型预测越准确
+## 依赖包
 
-## 许可证
+- pandas>=2.0.0
+- numpy>=1.24.0
+- scikit-learn>=1.3.0
+- xgboost>=2.0.0
+- lightgbm>=4.0.0
 
-MIT License
+## 参考
+
+- Kaggle 竞赛讨论区高分方案
+- XGBoost 官方文档
+- LightGBM 官方文档
