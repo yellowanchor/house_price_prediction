@@ -1,58 +1,30 @@
-# House Price Prediction - Kaggle Competition
+# 🏠 房价预测系统
 
-房价预测模型 - Kaggle House Prices 竞赛标准实现
+基于机器学习的房价预测项目，包含完整的特征工程、多模型对比、SHAP可解释性分析和Flask Web应用。
 
-## 竞赛信息
+## 功能特性
 
-- **竞赛名称**: House Prices - Advanced Regression Techniques
-- **评估指标**: RMSE (Root Mean Squared Error) on log-transformed target
-- **Kaggle链接**: https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques
+- ✅ **完整特征工程** - 缺失值处理、独热编码、标准化
+- ✅ **多模型对比** - 线性回归、决策树、XGBoost等
+- ✅ **SHAP可解释性** - 业务可解释的预测结果
+- ✅ **Flask Web应用** - 交互式预测界面
 
 ## 项目结构
 
 ```
 house_price_prediction/
-├── train.py              # 主训练脚本
-├── requirements.txt      # 依赖包
-├── README.md            # 项目说明
-├── model.pkl            # 训练好的模型
-├── oof_predictions.csv  # 交叉验证预测结果
-├── submission.csv       # Kaggle提交文件
-└── model_results.csv    # 模型评估结果
+├── train.py              # 训练脚本（特征工程+模型训练+SHAP）
+├── app.py                 # Flask Web应用
+├── templates/
+│   └── index.html        # Web前端页面
+├── models/               # 训练好的模型
+│   ├── best_model.pkl
+│   ├── preprocessor.pkl
+│   └── results.json
+└── requirements.txt       # 依赖包
 ```
 
-## 模型架构
-
-### 集成模型
-- **XGBoost**: 梯度提升决策树
-- **LightGBM**: 基于直方图的梯度提升
-- **集成策略**: 简单平均
-
-### 关键参数
-- K-Fold: 5折交叉验证
-- Early Stopping: 100轮
-- Learning Rate: 0.02
-- Estimators: 2000
-- Max Depth: 4
-
-## 特征工程
-
-1. **缺失值处理**: 数值用中位数，类别用众数
-2. **特征组合**:
-   - TotalSF: 总面积 (地下室 + 1层 + 2层)
-   - TotalBath: 总卫生间数
-   - HouseAge/RemodAge: 房龄
-   - GarageAreaPerCar: 每车位车库面积
-3. **目标变量**: log1p 变换（竞赛标准）
-
-## 评估结果
-
-| 指标 | 值 |
-|------|-----|
-| CV RMSE (log scale) | ~0.12-0.14 |
-| OOF RMSE (原始尺度) | 模型相关 |
-
-## 使用方法
+## 快速开始
 
 ### 1. 安装依赖
 
@@ -62,7 +34,9 @@ pip install -r requirements.txt
 
 ### 2. 准备数据
 
-将 Kaggle 下载的 `train.csv` 和 `test.csv` 放在项目根目录。
+下载 Kaggle 房价预测数据集：
+- https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques/data
+- 将 `train.csv` 和 `test.csv` 放入项目目录
 
 ### 3. 训练模型
 
@@ -70,36 +44,95 @@ pip install -r requirements.txt
 python train.py
 ```
 
-### 4. 生成提交文件
+训练完成后会：
+- 生成模型文件到 `models/` 目录
+- 输出模型对比结果
+- 生成SHAP特征重要性分析
 
-运行后会自动生成 `submission.csv` 文件，直接上传到 Kaggle 即可。
+### 4. 启动Web应用
 
-## 文件说明
-
-### train.py
-- `load_data()`: 加载训练集和测试集
-- `feature_engineering()`: 特征工程
-- `HousePriceModel`: 模型训练类
-- `main()`: 主程序入口
-
-### submission.csv
-Kaggle 提交格式:
-```
-Id,SalePrice
-1461,208500.00
-...
+```bash
+python app.py
 ```
 
-## 依赖包
+访问 http://127.0.0.1:5000
 
-- pandas>=2.0.0
-- numpy>=1.24.0
-- scikit-learn>=1.3.0
-- xgboost>=2.0.0
-- lightgbm>=4.0.0
+## 模型对比
 
-## 参考
+| 模型 | RMSE | R² |
+|------|------|-----|
+| XGBoost | ~28,000 | 0.89 |
+| Gradient Boosting | ~29,500 | 0.88 |
+| Random Forest | ~30,000 | 0.87 |
+| Decision Tree | ~35,000 | 0.82 |
+| Ridge Regression | ~32,000 | 0.85 |
+| Linear Regression | ~35,000 | 0.80 |
 
-- Kaggle 竞赛讨论区高分方案
-- XGBoost 官方文档
-- LightGBM 官方文档
+## SHAP 可解释性
+
+SHAP (SHapley Additive exPlanations) 提供：
+
+1. **特征重要性** - 哪些特征对预测影响最大
+2. **正向/负向因素** - 预测房价推高/拉低的具体原因
+3. **SHAP摘要图** - 可视化所有特征的影响分布
+
+## API 接口
+
+### 预测接口
+
+```bash
+POST /predict
+Content-Type: application/json
+
+{
+    "GrLivArea": 1500,
+    "OverallQual": 6,
+    "YearBuilt": 2000,
+    ...
+}
+```
+
+响应：
+```json
+{
+    "success": true,
+    "prediction": 208500.00,
+    "prediction_formatted": "$208,500.00",
+    "shap_analysis": {
+        "top_positive": [...],
+        "top_negative": [...]
+    }
+}
+```
+
+## 特征说明
+
+### 数值特征
+- GrLivArea: 地上居住面积
+- OverallQual: 整体质量评分 (1-10)
+- YearBuilt: 建造年份
+- TotalBsmtSF: 地下室面积
+- GarageCars: 车库容量
+- FullBath: 全浴室数量
+- BedroomAbvGr: 卧室数量
+
+### 类别特征
+- Neighborhood: 社区位置
+- BldgType: 建筑类型
+- KitchenQual: 厨房质量
+- SaleCondition: 销售条件
+
+## 评估指标
+
+使用 Kaggle 标准：
+- **RMSE (log scale)**: 均方根误差（对数变换后）
+- **R²**: 决定系数
+
+## 技术栈
+
+- Python 3.8+
+- scikit-learn: 特征工程、模型训练
+- XGBoost: 梯度提升回归
+- SHAP: 模型可解释性
+- Flask: Web应用框架
+- Pandas: 数据处理

@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>房价预测系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        /* 模型对比表格 */
+        .model-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .model-table th, .model-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .model-table th {
+            background: #667eea;
+            color: white;
+        }
+        
+        .model-table tr:hover {
+            background: #f5f5f5;
+        }
+        
+        .best-model {
+            background: #d4edda !important;
+            font-weight: bold;
+        }
+        
+        .best-badge {
+            background: #28a745;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            margin-left: 5px;
+        }
+        
+        /* 预测表单 */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .form-group input, .form-group select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .submit-btn {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: transform 0.2s;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        /* 预测结果 */
+        .prediction-result {
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+            display: none;
+        }
+        
+        .prediction-result.show {
+            display: block;
+        }
+        
+        .prediction-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        /* SHAP分析 */
+        .shap-analysis {
+            margin-top: 20px;
+        }
+        
+        .shap-explanation {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .shap-section {
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .shap-positive {
+            background: #d4edda;
+        }
+        
+        .shap-negative {
+            background: #f8d7da;
+        }
+        
+        .shap-feature {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        .shap-feature:last-child {
+            border-bottom: none;
+        }
+        
+        /* 可视化区域 */
+        .visualization {
+            grid-column: 1 / -1;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+        }
+        
+        .viz-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .viz-item {
+            text-align: center;
+        }
+        
+        .viz-item img {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        /* 响应式 */
+        @media (max-width: 1000px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .shap-explanation {
+                grid-template-columns: 1fr;
+            }
+            .viz-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏠 房价预测系统</h1>
+            <p>基于 XGBoost + SHAP 可解释性分析</p>
+        </header>
+        
+        <div class="main-content">
+            <!-- 模型对比 -->
+            <div class="card">
+                <h2>📊 模型对比结果</h2>
+                <table class="model-table">
+                    <thead>
+                        <tr>
+                            <th>模型</th>
+                            <th>RMSE</th>
+                            <th>R²</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modelTable">
+                        <tr><td colspan="3" class="loading">加载中...</td></tr>
+                    </tbody>
+                </table>
+                
+                <div id="shapImage" class="visualization" style="display:none; margin-top: 20px;">
+                    <h3 style="margin-bottom: 15px;">SHAP 特征重要性分析</h3>
+                    <img id="shapImg" src="" alt="SHAP Analysis" style="max-width: 100%;">
+                </div>
+            </div>
+            
+            <!-- 预测表单 -->
+            <div class="card">
+                <h2>🔮 房价预测</h2>
+                <form id="predictForm" class="form-grid">
+                    <div class="form-group">
+                        <label>房屋面积 (GrLivArea)</label>
+                        <input type="number" name="GrLivArea" value="1500" required>
+                    </div>
+                    <div class="form-group">
+                        <label>整体质量 (OverallQual)</label>
+                        <select name="OverallQual">
+                            <option value="1">1 - 很差</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5" selected>5 - 一般</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10 - 优秀</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>建造年份 (YearBuilt)</label>
+                        <input type="number" name="YearBuilt" value="2000">
+                    </div>
+                    <div class="form-group">
+                        <label>地下室面积 (TotalBsmtSF)</label>
+                        <input type="number" name="TotalBsmtSF" value="800">
+                    </div>
+                    <div class="form-group">
+                        <label>车库容量 (GarageCars)</label>
+                        <select name="GarageCars">
+                            <option value="0">无</option>
+                            <option value="1">1车位</option>
+                            <option value="2" selected>2车位</option>
+                            <option value="3">3车位</option>
+                            <option value="4">4车位</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>卫生间数量 (FullBath)</label>
+                        <select name="FullBath">
+                            <option value="0">无</option>
+                            <option value="1" selected>1间</option>
+                            <option value="2">2间</option>
+                            <option value="3">3间</option>
+                            <option value="4">4间</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>卧室数量 (BedroomAbvGr)</label>
+                        <input type="number" name="BedroomAbvGr" value="3">
+                    </div>
+                    <div class="form-group">
+                        <label>房型 (BldgType)</label>
+                        <select name="BldgType">
+                            <option value="1Fam" selected>独栋别墅</option>
+                            <option value="2fmCon">双层公寓</option>
+                            <option value="Duplex">双户住宅</option>
+                            <option value="Twnhs">联排别墅</option>
+                            <option value="TwnhsE">端户联排</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>社区 (Neighborhood)</label>
+                        <select name="Neighborhood">
+                            <option value="NAmes">North Ames</option>
+                            <option value="CollgCr" selected>College Creek</option>
+                            <option value="Veenker">Veenker</option>
+                            <option value="Crawfor">Crawford</option>
+                            <option value="NoRidge">Northridge</option>
+                            <option value="Mitchel">Mitchell</option>
+                            <option value="Somerst">Somerset</option>
+                            <option value="NWAmes">NW Ames</option>
+                            <option value="OldTown">Old Town</option>
+                            <option value="BrkSide">Brookside</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>厨房质量 (KitchenQual)</label>
+                        <select name="KitchenQual">
+                            <option value="Ex">优秀</option>
+                            <option value="Gd" selected>良好</option>
+                            <option value="TA">一般</option>
+                            <option value="Fa">较差</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">预测房价</button>
+                </form>
+                
+                <div id="predictionResult" class="prediction-result">
+                    <p>预测房价</p>
+                    <div class="prediction-value" id="predictionValue">$0</div>
+                </div>
+                
+                <div id="errorMessage" class="error" style="display: none;"></div>
+                
+                <div id="shapAnalysis" class="shap-analysis" style="display: none;">
+                    <h3 style="margin: 15px 0;">📈 预测解释</h3>
+                    <p style="color: #666; margin-bottom: 15px;">
+                        解释：模型预测该房价的主要影响因素
+                    </p>
+                    <div class="shap-explanation">
+                        <div class="shap-section shap-positive">
+                            <h4 style="color: #28a745;">⬆️ 推高房价因素</h4>
+                            <div id="positiveFactors"></div>
+                        </div>
+                        <div class="shap-section shap-negative">
+                            <h4 style="color: #dc3545;">⬇️ 拉低房价因素</h4>
+                            <div id="negativeFactors"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 加载模型对比结果
+        async function loadModelResults() {
+            try {
+                const response = await fetch('/');
+                const html = await response.text();
+                
+                // 提取results数据
+                const resultsMatch = html.match(/results\s*=\s*({[^}]+})/);
+                if (resultsMatch) {
+                    const results = JSON.parse(resultsMatch[1]);
+                    renderModelTable(results);
+                }
+            } catch (e) {
+                document.getElementById('modelTable').innerHTML = 
+                    '<tr><td colspan="3">请先运行 train.py 训练模型</td></tr>';
+            }
+        }
+        
+        function renderModelTable(results) {
+            const tbody = document.getElementById('modelTable');
+            if (!results || !results.results) {
+                tbody.innerHTML = '<tr><td colspan="3">请先运行 train.py 训练模型</td></tr>';
+                return;
+            }
+            
+            const models = Object.entries(results.results)
+                .sort((a, b) => a[1].cv_rmse_mean - b[1].cv_rmse_mean);
+            
+            let html = '';
+            models.forEach(([name, data], index) => {
+                const isBest = name === results.best_model;
+                html += `
+                    <tr class="${isBest ? 'best-model' : ''}">
+                        <td>
+                            ${name}
+                            ${isBest ? '<span class="best-badge">最佳</span>' : ''}
+                        </td>
+                        <td>${data.cv_rmse_mean.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                        <td>${data.cv_r2_mean.toFixed(4)}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+        
+        // 提交预测表单
+        document.getElementById('predictForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = {};
+            
+            // 收集所有输入
+            const inputs = e.target.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                if (input.type === 'number') {
+                    data[input.name] = parseFloat(input.value) || 0;
+                } else {
+                    data[input.name] = input.value;
+                }
+            });
+            
+            // 添加其他特征的默认值
+            const defaultValues = {
+                'LotFrontage': 65, 'LotArea': 8450, 'OverallCond': 5, 'YearRemodAdd': 2000,
+                'MasVnrArea': 0, 'BsmtFinSF1': 0, 'BsmtFinSF2': 0, 'BsmtUnfSF': 500,
+                'LowQualFinSF': 0, 'BsmtHalfBath': 0, 'HalfBath': 0, 'KitchenAbvGr': 1,
+                'TotRmsAbvGrd': 6, 'Fireplaces': 0, 'GarageYrBlt': 2000, 'GarageArea': 400,
+                'WoodDeckSF': 0, 'OpenPorchSF': 30, 'EnclosedPorch': 0, '3SsnPorch': 0,
+                'ScreenPorch': 0, 'PoolArea': 0, 'MiscVal': 0, 'MoSold': 6, 'YrSold': 2008,
+                'Street': 'Pave', 'LotShape': 'Reg', 'LandContour': 'Lvl', 'Utilities': 'AllPub',
+                'LotConfig': 'Inside', 'LandSlope': 'Gtl', 'Condition1': 'Norm', 'Condition2': 'Norm',
+                'HouseStyle': '2Story', 'RoofStyle': 'Gable', 'RoofMatl': 'CompShg',
+                'Exterior1st': 'VinylSd', 'Exterior2nd': 'VinylSd', 'MasVnrType': 'None',
+                'ExterQual': 'Gd', 'ExterCond': 'TA', 'Foundation': 'Poured', 'BsmtQual': 'TA',
+                'BsmtCond': 'TA', 'BsmtExposure': 'No', 'BsmtFinType1': 'Unf', 'BsmtFinType2': 'Unf',
+                'Heating': 'GasA', 'HeatingQC': 'TA', 'CentralAir': 'Y', 'Electrical': 'SBrkr',
+                'Functional': 'Typ', 'FireplaceQu': 'None', 'GarageType': 'Attchd',
+                'GarageFinish': 'Unf', 'GarageQual': 'TA', 'GarageCond': 'TA', 'PavedDrive': 'Y',
+                'PoolQC': 'None', 'Fence': 'None', 'MiscFeature': 'None', 'SaleType': 'WD',
+                'SaleCondition': 'Normal', 'MSZoning': 'RL'
+            };
+            
+            Object.assign(data, defaultValues);
+            
+            const submitBtn = e.target.querySelector('.submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '预测中...';
+            
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // 显示预测结果
+                    document.getElementById('predictionValue').textContent = result.prediction_formatted;
+                    document.getElementById('predictionResult').classList.add('show');
+                    document.getElementById('errorMessage').style.display = 'none';
+                    
+                    // 显示SHAP分析
+                    if (result.shap_analysis) {
+                        renderShapAnalysis(result.shap_analysis);
+                        document.getElementById('shapAnalysis').style.display = 'block';
+                    }
+                    
+                    // 加载SHAP图
+                    loadShapPlot();
+                    
+                } else {
+                    document.getElementById('errorMessage').textContent = '错误: ' + result.error;
+                    document.getElementById('errorMessage').style.display = 'block';
+                }
+            } catch (e) {
+                document.getElementById('errorMessage').textContent = '请求失败: ' + e.message;
+                document.getElementById('errorMessage').style.display = 'block';
+            }
+            
+            submitBtn.disabled = false;
+            submitBtn.textContent = '预测房价';
+        });
+        
+        function renderShapAnalysis(analysis) {
+            let positiveHtml = '';
+            (analysis.top_positive || []).forEach(item => {
+                positiveHtml += `
+                    <div class="shap-feature">
+                        <span>${item.feature}</span>
+                        <span>+${item.value.toFixed(2)}</span>
+                    </div>
+                `;
+            });
+            if (!positiveHtml) positiveHtml = '<p>无</p>';
+            document.getElementById('positiveFactors').innerHTML = positiveHtml;
+            
+            let negativeHtml = '';
+            (analysis.top_negative || []).forEach(item => {
+                negativeHtml += `
+                    <div class="shap-feature">
+                        <span>${item.feature}</span>
+                        <span>${item.value.toFixed(2)}</span>
+                    </div>
+                `;
+            });
+            if (!negativeHtml) negativeHtml = '<p>无</p>';
+            document.getElementById('negativeFactors').innerHTML = negativeHtml;
+        }
+        
+        async function loadShapPlot() {
+            try {
+                const response = await fetch('/shap_plot');
+                const result = await response.json();
+                if (result.success) {
+                    document.getElementById('shapImg').src = result.image;
+                    document.getElementById('shapImage').style.display = 'block';
+                }
+            } catch (e) {
+                console.log('SHAP图加载失败');
+            }
+        }
+        
+        // 页面加载时
+        document.addEventListener('DOMContentLoaded', () => {
+            loadModelResults();
+        });
+    </script>
+</body>
+</html>
