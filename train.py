@@ -223,6 +223,9 @@ class ModelTrainer:
             
             from sklearn.base import clone
             
+            # 保存最后一个fold训练后的模型用于最终保存
+            trained_model = None
+            
             for fold, (train_idx, val_idx) in enumerate(kf.split(X)):
                 X_train, X_val = X[train_idx], X[val_idx]
                 y_train, y_val_fold = y_log.iloc[train_idx], y_log.iloc[val_idx]
@@ -233,6 +236,10 @@ class ModelTrainer:
                     model_clone.fit(X_train, y_train, eval_set=[(X_val, y_val_fold)], verbose=False)
                 else:
                     model_clone.fit(X_train, y_train)
+                
+                # 保存最后一个fold的模型用于最终保存
+                if fold == kf.n_splits - 1:
+                    trained_model = model_clone
                 
                 pred_log = model_clone.predict(X_val)
                 pred = np.expm1(pred_log)
@@ -252,7 +259,7 @@ class ModelTrainer:
                 'cv_rmse_mean': np.mean(cv_scores),
                 'cv_rmse_std': np.std(cv_scores),
                 'cv_r2_mean': np.mean(cv_r2_scores),
-                'model': model
+                'model': trained_model if trained_model else model
             }
             
             print(f"  RMSE: {np.mean(cv_scores):,.2f} (+/- {np.std(cv_scores):,.2f})")
@@ -312,7 +319,17 @@ class ModelTrainer:
         
         import joblib
         best_model_path = os.path.join(path, 'best_model.pkl')
-        joblib.dump(self.best_model, best_model_path)
+        
+        # 对于XGBoost模型，使用原生save_model保存booster
+        model_to_save = self.best_model
+        if hasattr(model_to_save, 'get_booster'):
+            # 保存为JSON格式，再包装保存
+            booster_path = os.path.join(path, 'best_model_booster.json')
+            model_to_save.get_booster().save_model(booster_path)
+            # 同时保存模型对象
+            joblib.dump(model_to_save, best_model_path)
+        else:
+            joblib.dump(model_to_save, best_model_path)
         print(f"最佳模型已保存: {best_model_path}")
 
 # ==================== SHAP分析 ====================

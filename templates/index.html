@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>房价预测系统</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
         * {
             margin: 0;
             padding: 0;
@@ -12,93 +14,239 @@
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
             min-height: 100vh;
-            padding: 20px;
         }
         
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
+            padding: 40px 24px;
         }
         
-        header {
+        /* Header */
+        .header {
             text-align: center;
+            margin-bottom: 48px;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+        
+        .header p {
+            font-size: 1rem;
+            color: #64748b;
+        }
+        
+        .header .tag {
+            display: inline-block;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
             color: white;
-            margin-bottom: 30px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-top: 12px;
         }
         
-        header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
+        /* Language Switcher */
+        .lang-switch {
+            position: absolute;
+            top: 0;
+            right: 0;
+            display: flex;
+            gap: 4px;
+            background: white;
+            padding: 4px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         
-        header p {
-            font-size: 1.1rem;
-            opacity: 0.9;
+        .lang-btn {
+            padding: 6px 12px;
+            border: none;
+            background: transparent;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #64748b;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
         }
         
-        .main-content {
+        .lang-btn:hover {
+            color: #3b82f6;
+        }
+        
+        .lang-btn.active {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        /* Grid Layout */
+        .grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 24px;
         }
         
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .lang-switch {
+                position: relative;
+                top: auto;
+                right: auto;
+                margin: 20px auto;
+                width: fit-content;
+            }
+        }
+        
+        /* Card */
         .card {
             background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.03);
+            border: 1px solid #e2e8f0;
         }
         
-        .card h2 {
-            color: #333;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #667eea;
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #f1f5f9;
         }
         
-        /* 模型对比表格 */
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .card-icon.blue {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+        
+        .card-icon.purple {
+            background: #ede9fe;
+            color: #7c3aed;
+        }
+        
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #0f172a;
+        }
+        
+        /* SVG Icons */
+        .icon {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+        
+        /* Model Table */
         .model-table {
             width: 100%;
             border-collapse: collapse;
         }
         
-        .model-table th, .model-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-        
         .model-table th {
-            background: #667eea;
-            color: white;
+            text-align: left;
+            padding: 10px 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            background: #f8fafc;
+            border-radius: 8px 8px 0 0;
         }
         
-        .model-table tr:hover {
-            background: #f5f5f5;
+        .model-table td {
+            padding: 14px 12px;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #f1f5f9;
         }
         
-        .best-model {
-            background: #d4edda !important;
-            font-weight: bold;
+        .model-table tr:last-child td {
+            border-bottom: none;
         }
         
-        .best-badge {
-            background: #28a745;
+        .model-table tr:hover td {
+            background: #f8fafc;
+        }
+        
+        .model-table .best td {
+            background: #f0fdf4;
+        }
+        
+        .model-name {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .model-name .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #94a3b8;
+        }
+        
+        .best .model-name .dot {
+            background: #22c55e;
+        }
+        
+        .badge {
+            background: #22c55e;
             color: white;
             padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 0.75rem;
-            margin-left: 5px;
+            border-radius: 6px;
+            font-size: 0.65rem;
+            font-weight: 600;
         }
         
-        /* 预测表单 */
+        .rmse {
+            font-family: 'SF Mono', Monaco, monospace;
+            font-weight: 500;
+            color: #334155;
+        }
+        
+        .r2 {
+            font-family: 'SF Mono', Monaco, monospace;
+            color: #64748b;
+        }
+        
+        /* Form */
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 500px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
         }
         
         .form-group {
@@ -106,256 +254,385 @@
             flex-direction: column;
         }
         
-        .form-group label {
-            font-weight: 600;
-            color: #555;
-            margin-bottom: 5px;
-            font-size: 0.9rem;
-        }
-        
-        .form-group input, .form-group select {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.3s;
-        }
-        
-        .form-group input:focus, .form-group select:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        .submit-btn {
+        .form-group.full-width {
             grid-column: 1 / -1;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .form-group label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #475569;
+            margin-bottom: 6px;
+        }
+        
+        .form-group label .unit {
+            color: #94a3b8;
+            font-weight: 400;
+        }
+        
+        .form-group input,
+        .form-group select {
+            padding: 12px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            background: #fafbfc;
+            transition: all 0.2s ease;
+        }
+        
+        .form-group input:hover,
+        .form-group select:hover {
+            border-color: #cbd5e1;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 14px 24px;
+            background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
             color: white;
             border: none;
-            padding: 15px;
             border-radius: 10px;
-            font-size: 1.1rem;
+            font-size: 0.95rem;
+            font-weight: 600;
             cursor: pointer;
-            margin-top: 10px;
-            transition: transform 0.2s;
+            transition: all 0.2s ease;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
         
-        .submit-btn:hover {
-            transform: translateY(-2px);
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
         
-        .submit-btn:disabled {
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
+            transform: none;
         }
         
-        /* 预测结果 */
-        .prediction-result {
-            margin-top: 20px;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 10px;
+        /* Result */
+        .result-card {
+            margin-top: 24px;
+            padding: 24px;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border-radius: 14px;
             color: white;
             text-align: center;
             display: none;
         }
         
-        .prediction-result.show {
+        .result-card.show {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .result-label {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        
+        .result-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 8px 0;
+            letter-spacing: -0.02em;
+        }
+        
+        .result-note {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+        
+        /* SHAP Analysis */
+        .shap-section {
+            margin-top: 24px;
+            display: none;
+        }
+        
+        .shap-section.show {
             display: block;
         }
         
-        .prediction-value {
-            font-size: 2.5rem;
-            font-weight: bold;
-            margin: 10px 0;
+        .shap-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 12px;
         }
         
-        /* SHAP分析 */
-        .shap-analysis {
-            margin-top: 20px;
-        }
-        
-        .shap-explanation {
+        .shap-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            gap: 12px;
         }
         
-        .shap-section {
-            padding: 15px;
+        @media (max-width: 500px) {
+            .shap-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .shap-box {
+            padding: 16px;
             border-radius: 10px;
         }
         
-        .shap-positive {
-            background: #d4edda;
+        .shap-box.positive {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
         }
         
-        .shap-negative {
-            background: #f8d7da;
+        .shap-box.negative {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
         }
         
-        .shap-feature {
+        .shap-box h4 {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .shap-box.positive h4 {
+            color: #16a34a;
+        }
+        
+        .shap-box.negative h4 {
+            color: #dc2626;
+        }
+        
+        .shap-item {
             display: flex;
             justify-content: space-between;
-            padding: 5px 0;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
+            padding: 6px 0;
+            font-size: 0.8rem;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
         }
         
-        .shap-feature:last-child {
+        .shap-item:last-child {
             border-bottom: none;
         }
         
-        /* 可视化区域 */
-        .visualization {
-            grid-column: 1 / -1;
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
+        .shap-item .feature {
+            color: #374151;
         }
         
-        .viz-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+        .shap-item .value {
+            font-family: 'SF Mono', Monaco, monospace;
+            font-weight: 500;
         }
         
-        .viz-item {
-            text-align: center;
+        .shap-box.positive .value {
+            color: #16a34a;
         }
         
-        .viz-item img {
-            max-width: 100%;
+        .shap-box.negative .value {
+            color: #dc2626;
+        }
+        
+        /* Error */
+        .error-msg {
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
             border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            color: #dc2626;
+            font-size: 0.85rem;
+            display: none;
         }
         
+        .error-msg.show {
+            display: block;
+        }
+        
+        /* SHAP Image */
+        .shap-image-section {
+            margin-top: 24px;
+            display: none;
+        }
+        
+        .shap-image-section.show {
+            display: block;
+        }
+        
+        .shap-image-section img {
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        /* Loading */
         .loading {
             text-align: center;
-            padding: 50px;
-            color: #666;
+            padding: 40px;
+            color: #94a3b8;
+            font-size: 0.9rem;
         }
         
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
+        .skeleton {
+            height: 20px;
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
         }
         
-        /* 响应式 */
-        @media (max-width: 1000px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-            .shap-explanation {
-                grid-template-columns: 1fr;
-            }
-            .viz-grid {
-                grid-template-columns: 1fr;
-            }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>🏠 房价预测系统</h1>
-            <p>基于 XGBoost + SHAP 可解释性分析</p>
+        <header class="header">
+            <h1 data-zh="房价预测系统" data-en="House Price Prediction">房价预测系统</h1>
+            <p data-zh="基于机器学习技术的智能房产估值" data-en="Intelligent Real Estate Valuation">基于机器学习技术的智能房产估值</p>
+            <span class="tag">XGBoost + SHAP</span>
+            
+            <div class="lang-switch">
+                <button class="lang-btn active" data-lang="zh">中文</button>
+                <button class="lang-btn" data-lang="en">EN</button>
+            </div>
         </header>
         
-        <div class="main-content">
-            <!-- 模型对比 -->
+        <div class="grid">
+            <!-- Model Comparison -->
             <div class="card">
-                <h2>📊 模型对比结果</h2>
+                <div class="card-header">
+                    <div class="card-icon blue">
+                        <svg class="icon" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+                    </div>
+                    <h2 class="card-title" data-zh="模型性能对比" data-en="Model Performance">模型性能对比</h2>
+                </div>
                 <table class="model-table">
                     <thead>
                         <tr>
-                            <th>模型</th>
-                            <th>RMSE</th>
+                            <th data-zh="算法" data-en="Algorithm">算法</th>
+                            <th data-zh="RMSE ($)" data-en="RMSE ($)">RMSE ($)</th>
                             <th>R²</th>
                         </tr>
                     </thead>
                     <tbody id="modelTable">
-                        <tr><td colspan="3" class="loading">加载中...</td></tr>
+                        <tr><td colspan="3"><div class="loading"><div class="skeleton"></div><div class="skeleton" style="margin-top:8px;"></div></div></td></tr>
                     </tbody>
                 </table>
                 
-                <div id="shapImage" class="visualization" style="display:none; margin-top: 20px;">
-                    <h3 style="margin-bottom: 15px;">SHAP 特征重要性分析</h3>
-                    <img id="shapImg" src="" alt="SHAP Analysis" style="max-width: 100%;">
+                <div id="shapImage" class="shap-image-section">
+                    <h3 class="shap-title" data-zh="特征重要性 (SHAP)" data-en="Feature Importance (SHAP)">特征重要性 (SHAP)</h3>
+                    <img id="shapImg" src="" alt="SHAP Analysis">
                 </div>
             </div>
             
-            <!-- 预测表单 -->
+            <!-- Prediction Form -->
             <div class="card">
-                <h2>🔮 房价预测</h2>
+                <div class="card-header">
+                    <div class="card-icon purple">
+                        <svg class="icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"/></svg>
+                    </div>
+                    <h2 class="card-title" data-zh="房价预测" data-en="Predict Price">房价预测</h2>
+                </div>
+                
                 <form id="predictForm" class="form-grid">
                     <div class="form-group">
-                        <label>房屋面积 (GrLivArea)</label>
-                        <input type="number" name="GrLivArea" value="1500" required>
+                        <label data-zh="居住面积 <span class='unit'>(㎡)</span>" data-en="Living Area <span class='unit'>(sq ft)</span>">居住面积 <span class="unit">(㎡)</span></label>
+                        <input type="number" name="GrLivArea" value="139" required>
                     </div>
                     <div class="form-group">
-                        <label>整体质量 (OverallQual)</label>
+                        <label data-zh="整体质量 <span class='unit'>(1-10分)</span>" data-en="Overall Quality <span class='unit'>(1-10)</span>">整体质量 <span class="unit">(1-10分)</span></label>
                         <select name="OverallQual">
-                            <option value="1">1 - 很差</option>
+                            <option value="1" data-zh="1 - 很差" data-en="1 - Poor">1 - 很差</option>
                             <option value="2">2</option>
                             <option value="3">3</option>
                             <option value="4">4</option>
-                            <option value="5" selected>5 - 一般</option>
+                            <option value="5" selected data-zh="5 - 一般" data-en="5 - Average">5 - 一般</option>
                             <option value="6">6</option>
                             <option value="7">7</option>
                             <option value="8">8</option>
                             <option value="9">9</option>
-                            <option value="10">10 - 优秀</option>
+                            <option value="10" data-zh="10 - 优秀" data-en="10 - Excellent">10 - 优秀</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>建造年份 (YearBuilt)</label>
+                        <label data-zh="建造年份" data-en="Year Built">建造年份</label>
                         <input type="number" name="YearBuilt" value="2000">
                     </div>
                     <div class="form-group">
-                        <label>地下室面积 (TotalBsmtSF)</label>
-                        <input type="number" name="TotalBsmtSF" value="800">
+                        <label data-zh="地下室面积 <span class='unit'>(㎡)</span>" data-en="Basement Area <span class='unit'>(sq ft)</span>">地下室面积 <span class="unit">(㎡)</span></label>
+                        <input type="number" name="TotalBsmtSF" value="74">
                     </div>
                     <div class="form-group">
-                        <label>车库容量 (GarageCars)</label>
+                        <label data-zh="车库容量" data-en="Garage Capacity">车库容量</label>
                         <select name="GarageCars">
-                            <option value="0">无</option>
-                            <option value="1">1车位</option>
-                            <option value="2" selected>2车位</option>
-                            <option value="3">3车位</option>
-                            <option value="4">4车位</option>
+                            <option value="0" data-zh="无" data-en="None">无</option>
+                            <option value="1" data-zh="1车位" data-en="1 Car">1车位</option>
+                            <option value="2" selected data-zh="2车位" data-en="2 Cars">2车位</option>
+                            <option value="3" data-zh="3车位" data-en="3 Cars">3车位</option>
+                            <option value="4" data-zh="4车位" data-en="4 Cars">4车位</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>卫生间数量 (FullBath)</label>
+                        <label data-zh="卫生间数量" data-en="Full Bathrooms">卫生间数量</label>
                         <select name="FullBath">
-                            <option value="0">无</option>
-                            <option value="1" selected>1间</option>
-                            <option value="2">2间</option>
-                            <option value="3">3间</option>
-                            <option value="4">4间</option>
+                            <option value="0" data-zh="无" data-en="None">无</option>
+                            <option value="1" selected>1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>卧室数量 (BedroomAbvGr)</label>
+                        <label data-zh="卧室数量 <span class='unit'>(地上)</span>" data-en="Bedrooms <span class='unit'>(above ground)</span>">卧室数量 <span class="unit">(地上)</span></label>
                         <input type="number" name="BedroomAbvGr" value="3">
                     </div>
                     <div class="form-group">
-                        <label>房型 (BldgType)</label>
+                        <label data-zh="建筑类型" data-en="Building Type">建筑类型</label>
                         <select name="BldgType">
-                            <option value="1Fam" selected>独栋别墅</option>
-                            <option value="2fmCon">双层公寓</option>
-                            <option value="Duplex">双户住宅</option>
-                            <option value="Twnhs">联排别墅</option>
-                            <option value="TwnhsE">端户联排</option>
+                            <option value="1Fam" selected data-zh="独栋别墅" data-en="Single Family">独栋别墅</option>
+                            <option value="2fmCon" data-zh="双户转换" data-en="2-Family Conversion">双户转换</option>
+                            <option value="Duplex" data-zh="双拼别墅" data-en="Duplex">双拼别墅</option>
+                            <option value="Twnhs" data-zh="联排别墅(中间)" data-en="Townhouse Inside">联排别墅(中间)</option>
+                            <option value="TwnhsE" data-zh="联排别墅(端户)" data-en="Townhouse End">联排别墅(端户)</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>社区 (Neighborhood)</label>
+                        <label data-zh="社区" data-en="Neighborhood">社区</label>
                         <select name="Neighborhood">
                             <option value="NAmes">North Ames</option>
                             <option value="CollgCr" selected>College Creek</option>
@@ -370,37 +647,46 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>厨房质量 (KitchenQual)</label>
+                        <label data-zh="厨房质量" data-en="Kitchen Quality">厨房质量</label>
                         <select name="KitchenQual">
-                            <option value="Ex">优秀</option>
-                            <option value="Gd" selected>良好</option>
-                            <option value="TA">一般</option>
-                            <option value="Fa">较差</option>
+                            <option value="Ex" data-zh="优秀" data-en="Excellent">优秀</option>
+                            <option value="Gd" selected data-zh="良好" data-en="Good">良好</option>
+                            <option value="TA" data-zh="一般" data-en="Typical">一般</option>
+                            <option value="Fa" data-zh="较差" data-en="Fair">较差</option>
                         </select>
                     </div>
                     
-                    <button type="submit" class="submit-btn">预测房价</button>
+                    <div class="form-group full-width">
+                        <button type="submit" class="btn">
+                            <svg class="icon" viewBox="0 0 24 24" style="width:18px;height:18px;"><path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/></svg>
+                            <span data-zh="预测房价" data-en="Predict Price">预测房价</span>
+                        </button>
+                    </div>
                 </form>
                 
-                <div id="predictionResult" class="prediction-result">
-                    <p>预测房价</p>
-                    <div class="prediction-value" id="predictionValue">$0</div>
+                <div id="predictionResult" class="result-card">
+                    <div class="result-label" data-zh="预估价格" data-en="Estimated Price">预估价格</div>
+                    <div class="result-value" id="predictionValue">$0</div>
+                    <div class="result-note" data-zh="基于可比市场数据" data-en="Based on comparable market data">基于可比市场数据</div>
                 </div>
                 
-                <div id="errorMessage" class="error" style="display: none;"></div>
+                <div id="errorMessage" class="error-msg"></div>
                 
-                <div id="shapAnalysis" class="shap-analysis" style="display: none;">
-                    <h3 style="margin: 15px 0;">📈 预测解释</h3>
-                    <p style="color: #666; margin-bottom: 15px;">
-                        解释：模型预测该房价的主要影响因素
-                    </p>
-                    <div class="shap-explanation">
-                        <div class="shap-section shap-positive">
-                            <h4 style="color: #28a745;">⬆️ 推高房价因素</h4>
+                <div id="shapAnalysis" class="shap-section">
+                    <h3 class="shap-title" data-zh="价格影响因素分析" data-en="Price Factor Analysis">价格影响因素分析</h3>
+                    <div class="shap-grid">
+                        <div class="shap-box positive">
+                            <h4>
+                                <svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M7 14l5-5 5 5z"/></svg>
+                                <span data-zh="推高房价因素" data-en="Increase Value">推高房价因素</span>
+                            </h4>
                             <div id="positiveFactors"></div>
                         </div>
-                        <div class="shap-section shap-negative">
-                            <h4 style="color: #dc3545;">⬇️ 拉低房价因素</h4>
+                        <div class="shap-box negative">
+                            <h4>
+                                <svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M7 10l5 5 5-5z"/></svg>
+                                <span data-zh="拉低房价因素" data-en="Decrease Value">拉低房价因素</span>
+                            </h4>
                             <div id="negativeFactors"></div>
                         </div>
                     </div>
@@ -410,28 +696,56 @@
     </div>
     
     <script>
-        // 加载模型对比结果
+        // Language switching
+        const langBtns = document.querySelectorAll('.lang-btn');
+        let currentLang = 'zh';
+        
+        langBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                langBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentLang = btn.dataset.lang;
+                updateLanguage();
+            });
+        });
+        
+        function updateLanguage() {
+            document.querySelectorAll('[data-zh]').forEach(el => {
+                const text = el.dataset[currentLang];
+                if (el.tagName === 'INPUT' || el.tagName === 'SELECT') return;
+                if (el.querySelector('span.unit')) {
+                    const unitMatch = text.match(/<span class='unit'>\(([^)]+)\)<\/span>/);
+                    if (unitMatch) {
+                        const unitSpan = el.querySelector('.unit');
+                        if (unitSpan) unitSpan.textContent = `(${unitMatch[1]})`;
+                    }
+                } else {
+                    el.textContent = text;
+                }
+            });
+            
+            // Update select options
+            document.querySelectorAll('select option[data-zh]').forEach(opt => {
+                opt.textContent = opt.dataset[currentLang];
+            });
+        }
+        
+        // Load model results
         async function loadModelResults() {
             try {
-                const response = await fetch('/');
-                const html = await response.text();
-                
-                // 提取results数据
-                const resultsMatch = html.match(/results\s*=\s*({[^}]+})/);
-                if (resultsMatch) {
-                    const results = JSON.parse(resultsMatch[1]);
-                    renderModelTable(results);
-                }
+                const response = await fetch('/api/results');
+                const results = await response.json();
+                renderModelTable(results);
             } catch (e) {
                 document.getElementById('modelTable').innerHTML = 
-                    '<tr><td colspan="3">请先运行 train.py 训练模型</td></tr>';
+                    '<tr><td colspan="3" style="color:#94a3b8;">请先运行 train.py 训练模型</td></tr>';
             }
         }
         
         function renderModelTable(results) {
             const tbody = document.getElementById('modelTable');
             if (!results || !results.results) {
-                tbody.innerHTML = '<tr><td colspan="3">请先运行 train.py 训练模型</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="3" style="color:#94a3b8;">请先运行 train.py 训练模型</td></tr>';
                 return;
             }
             
@@ -439,30 +753,31 @@
                 .sort((a, b) => a[1].cv_rmse_mean - b[1].cv_rmse_mean);
             
             let html = '';
-            models.forEach(([name, data], index) => {
+            models.forEach(([name, data]) => {
                 const isBest = name === results.best_model;
+                const bestText = currentLang === 'zh' ? '最佳' : 'Best';
                 html += `
-                    <tr class="${isBest ? 'best-model' : ''}">
+                    <tr class="${isBest ? 'best' : ''}">
                         <td>
-                            ${name}
-                            ${isBest ? '<span class="best-badge">最佳</span>' : ''}
+                            <div class="model-name">
+                                <span class="dot"></span>
+                                ${name}
+                                ${isBest ? `<span class="badge">${bestText}</span>` : ''}
+                            </div>
                         </td>
-                        <td>${data.cv_rmse_mean.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                        <td>${data.cv_r2_mean.toFixed(4)}</td>
+                        <td class="rmse">${Number(data.cv_rmse_mean).toLocaleString()}</td>
+                        <td class="r2">${Number(data.cv_r2_mean).toFixed(4)}</td>
                     </tr>
                 `;
             });
             tbody.innerHTML = html;
         }
         
-        // 提交预测表单
+        // Form submission
         document.getElementById('predictForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const formData = new FormData(e.target);
             const data = {};
-            
-            // 收集所有输入
             const inputs = e.target.querySelectorAll('input, select');
             inputs.forEach(input => {
                 if (input.type === 'number') {
@@ -472,7 +787,11 @@
                 }
             });
             
-            // 添加其他特征的默认值
+            // Convert sqm to sqft for backend
+            if (data.GrLivArea) data.GrLivArea = data.GrLivArea * 10.764;
+            if (data.TotalBsmtSF) data.TotalBsmtSF = data.TotalBsmtSF * 10.764;
+            
+            // Default values
             const defaultValues = {
                 'LotFrontage': 65, 'LotArea': 8450, 'OverallCond': 5, 'YearRemodAdd': 2000,
                 'MasVnrArea': 0, 'BsmtFinSF1': 0, 'BsmtFinSF2': 0, 'BsmtUnfSF': 500,
@@ -495,9 +814,10 @@
             
             Object.assign(data, defaultValues);
             
-            const submitBtn = e.target.querySelector('.submit-btn');
+            const submitBtn = e.target.querySelector('.btn');
+            const btnText = submitBtn.querySelector('span');
             submitBtn.disabled = true;
-            submitBtn.textContent = '预测中...';
+            btnText.textContent = currentLang === 'zh' ? '分析中...' : 'Analyzing...';
             
             try {
                 const response = await fetch('/predict', {
@@ -509,56 +829,55 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    // 显示预测结果
                     document.getElementById('predictionValue').textContent = result.prediction_formatted;
                     document.getElementById('predictionResult').classList.add('show');
-                    document.getElementById('errorMessage').style.display = 'none';
+                    document.getElementById('errorMessage').classList.remove('show');
                     
-                    // 显示SHAP分析
                     if (result.shap_analysis) {
                         renderShapAnalysis(result.shap_analysis);
-                        document.getElementById('shapAnalysis').style.display = 'block';
+                        document.getElementById('shapAnalysis').classList.add('show');
                     }
                     
-                    // 加载SHAP图
                     loadShapPlot();
                     
                 } else {
                     document.getElementById('errorMessage').textContent = '错误: ' + result.error;
-                    document.getElementById('errorMessage').style.display = 'block';
+                    document.getElementById('errorMessage').classList.add('show');
                 }
             } catch (e) {
                 document.getElementById('errorMessage').textContent = '请求失败: ' + e.message;
-                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('errorMessage').classList.add('show');
             }
             
             submitBtn.disabled = false;
-            submitBtn.textContent = '预测房价';
+            btnText.textContent = currentLang === 'zh' ? '预测房价' : 'Predict Price';
         });
         
         function renderShapAnalysis(analysis) {
+            const noneText = currentLang === 'zh' ? '无' : 'None';
+            
             let positiveHtml = '';
             (analysis.top_positive || []).forEach(item => {
                 positiveHtml += `
-                    <div class="shap-feature">
-                        <span>${item.feature}</span>
-                        <span>+${item.value.toFixed(2)}</span>
+                    <div class="shap-item">
+                        <span class="feature">${item.feature}</span>
+                        <span class="value">+${item.value.toFixed(3)}</span>
                     </div>
                 `;
             });
-            if (!positiveHtml) positiveHtml = '<p>无</p>';
+            if (!positiveHtml) positiveHtml = `<p style="font-size:0.8rem;color:#666;">${noneText}</p>`;
             document.getElementById('positiveFactors').innerHTML = positiveHtml;
             
             let negativeHtml = '';
             (analysis.top_negative || []).forEach(item => {
                 negativeHtml += `
-                    <div class="shap-feature">
-                        <span>${item.feature}</span>
-                        <span>${item.value.toFixed(2)}</span>
+                    <div class="shap-item">
+                        <span class="feature">${item.feature}</span>
+                        <span class="value">${item.value.toFixed(3)}</span>
                     </div>
                 `;
             });
-            if (!negativeHtml) negativeHtml = '<p>无</p>';
+            if (!negativeHtml) negativeHtml = `<p style="font-size:0.8rem;color:#666;">${noneText}</p>`;
             document.getElementById('negativeFactors').innerHTML = negativeHtml;
         }
         
@@ -568,14 +887,14 @@
                 const result = await response.json();
                 if (result.success) {
                     document.getElementById('shapImg').src = result.image;
-                    document.getElementById('shapImage').style.display = 'block';
+                    document.getElementById('shapImage').classList.add('show');
                 }
             } catch (e) {
-                console.log('SHAP图加载失败');
+                console.log('SHAP image load failed');
             }
         }
         
-        // 页面加载时
+        // Init
         document.addEventListener('DOMContentLoaded', () => {
             loadModelResults();
         });

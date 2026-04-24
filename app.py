@@ -35,6 +35,8 @@ def load_models():
     """加载训练好的模型"""
     global model, preprocessor, feature_names, numeric_features, categorical_features
     
+    import joblib
+    
     model_path = os.path.join(app.config['MODEL_PATH'], 'best_model.pkl')
     preprocessor_path = os.path.join(app.config['MODEL_PATH'], 'preprocessor.pkl')
     
@@ -42,9 +44,10 @@ def load_models():
         print("模型文件不存在，请先运行 train.py")
         return False
     
-    with open(model_path, 'rb') as f:
-        model = pickle.load(f)
+    # 使用joblib加载模型
+    model = joblib.load(model_path)
     
+    # 使用pickle加载预处理器
     with open(preprocessor_path, 'rb') as f:
         data = pickle.load(f)
         preprocessor = data['preprocessor']
@@ -66,7 +69,18 @@ def index():
         with open(results_path, 'r') as f:
             results = json.load(f)
     
+    # 将results传递给模板
     return render_template('index.html', results=results)
+
+@app.route('/api/results')
+def api_results():
+    """API: 获取模型对比结果"""
+    results_path = os.path.join(app.config['MODEL_PATH'], 'results.json')
+    results = {}
+    if os.path.exists(results_path):
+        with open(results_path, 'r') as f:
+            results = json.load(f)
+    return jsonify(results)
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -100,7 +114,7 @@ def predict():
         
         # 预测
         pred_log = model.predict(X)
-        pred = np.expm1(pred_log)[0]
+        pred = float(np.expm1(pred_log)[0])  # 转换为Python float
         
         result = {
             'success': True,
@@ -194,7 +208,7 @@ def feature_importance():
         importance = np.abs(shap_values).mean(axis=0)
         importance_df = pd.DataFrame({
             'feature': feature_names,
-            'importance': importance
+            'importance': [float(x) for x in importance]  # 转换为Python float
         }).sort_values('importance', ascending=False).head(20)
         
         return jsonify({
