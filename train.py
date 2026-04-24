@@ -1,6 +1,7 @@
 """
 房价预测模型 - 完整版
 特征工程 + 多模型对比 + SHAP可解释性 + Flask Web应用
+官方Kaggle数据获取
 """
 
 import pandas as pd
@@ -8,7 +9,7 @@ import numpy as np
 import os
 import pickle
 import json
-from sklearn.model_selection import KFold, cross_val_score
+from sklearn.model_selection import KFold
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
@@ -16,7 +17,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
+from sklearn.metrics import mean_squared_error, r2_score
 import xgboost as xgb
 import warnings
 warnings.filterwarnings('ignore')
@@ -28,34 +29,10 @@ class Config:
     TARGET = 'SalePrice'
     RANDOM_STATE = 42
     N_FOLDS = 5
-    
-    # 数值特征
-    NUMERIC_FEATURES = [
-        'LotFrontage', 'LotArea', 'OverallQual', 'OverallCond', 'YearBuilt',
-        'YearRemodAdd', 'MasVnrArea', 'BsmtFinSF1', 'BsmtFinSF2', 'BsmtUnfSF',
-        'TotalBsmtSF', '1stFlrSF', '2ndFlrSF', 'LowQualFinSF', 'GrLivArea',
-        'BsmtFullBath', 'BsmtHalfBath', 'FullBath', 'HalfBath', 'BedroomAbvGr',
-        'KitchenAbvGr', 'TotRmsAbvGrd', 'Fireplaces', 'GarageYrBlt',
-        'GarageCars', 'GarageArea', 'WoodDeckSF', 'OpenPorchSF', 'EnclosedPorch',
-        '3SsnPorch', 'ScreenPorch', 'PoolArea', 'MiscVal', 'MoSold', 'YrSold'
-    ]
-    
-    # 类别特征
-    CATEGORICAL_FEATURES = [
-        'MSZoning', 'Street', 'LotShape', 'LandContour', 'Utilities',
-        'LotConfig', 'LandSlope', 'Neighborhood', 'Condition1', 'Condition2',
-        'BldgType', 'HouseStyle', 'RoofStyle', 'RoofMatl', 'Exterior1st',
-        'Exterior2nd', 'MasVnrType', 'ExterQual', 'ExterCond', 'Foundation',
-        'BsmtQual', 'BsmtCond', 'BsmtExposure', 'BsmtFinType1', 'BsmtFinType2',
-        'Heating', 'HeatingQC', 'CentralAir', 'Electrical', 'KitchenQual',
-        'Functional', 'FireplaceQu', 'GarageType', 'GarageFinish', 'GarageQual',
-        'GarageCond', 'PavedDrive', 'PoolQC', 'Fence', 'MiscFeature', 'SaleType',
-        'SaleCondition'
-    ]
 
-# ==================== 数据加载 ====================
+# ==================== 数据加载（官方Kaggle方法）====================
 def load_data():
-    """加载训练集和测试集"""
+    """使用kagglehub官方方法加载数据"""
     print("="*60)
     print("房价预测模型 - 完整版")
     print("="*60)
@@ -63,17 +40,65 @@ def load_data():
     train_path = os.path.join(Config.DATA_PATH, 'train.csv')
     test_path = os.path.join(Config.DATA_PATH, 'test.csv')
     
+    # 如果本地已有数据，直接加载
     if os.path.exists(train_path):
         train_df = pd.read_csv(train_path)
         test_df = pd.read_csv(test_path) if os.path.exists(test_path) else None
-        print(f"\n本地数据 - 训练集: {train_df.shape}")
+        print(f"\n加载本地数据 - 训练集: {train_df.shape}")
+        if test_df is not None:
+            print(f"测试集: {test_df.shape}")
         return train_df, test_df
     
-    # 使用 OpenML 数据集
-    print("\n使用 OpenML 数据集...")
-    from sklearn.datasets import fetch_openml
-    housing = fetch_openml(name="house_prices", as_frame=True, parser='auto')
-    return housing.frame, None
+    # 使用 kagglehub 官方方法下载
+    print("\n使用 KaggleHub 官方方法下载数据...")
+    
+    try:
+        import kagglehub
+        
+        # 方法1: 下载竞赛数据
+        print("下载 Kaggle House Prices 竞赛数据...")
+        path = kagglehub.competition_download('house-prices-advanced-regression-techniques')
+        
+        # 查找下载的文件
+        files = os.listdir(path)
+        print(f"下载完成，文件列表: {files}")
+        
+        # 加载数据
+        train_file = os.path.join(path, 'train.csv')
+        test_file = os.path.join(path, 'test.csv')
+        
+        if os.path.exists(train_file):
+            train_df = pd.read_csv(train_file)
+            test_df = pd.read_csv(test_file) if os.path.exists(test_file) else None
+            print(f"\n训练集: {train_df.shape}")
+            if test_df is not None:
+                print(f"测试集: {test_df.shape}")
+            return train_df, test_df
+        
+        raise FileNotFoundError("train.csv not found in downloaded files")
+        
+    except ImportError:
+        print("kagglehub 未安装，安装中...")
+        os.system('pip install kagglehub')
+        return load_data()
+        
+    except Exception as e:
+        print(f"KaggleHub 下载失败: {e}")
+        print("\n" + "="*60)
+        print("请确保已完成以下配置：")
+        print("1. 安装 kaggle 包: pip install kagglehub")
+        print("2. 配置 Kaggle 认证:")
+        print("   - 访问 https://www.kaggle.com/account")
+        print("   - 点击 'Create New API Token' 下载 kaggle.json")
+        print("   - Windows: 放置到 C:\\Users\\<用户名>\\.kaggle\\kaggle.json")
+        print("   - Linux/Mac: 放置到 ~/.kaggle/kaggle.json")
+        print("="*60)
+        
+        # 备用方案：使用 OpenML
+        print("\n使用备用数据源 OpenML...")
+        from sklearn.datasets import fetch_openml
+        housing = fetch_openml(name="house_prices", as_frame=True, parser='auto')
+        return housing.frame, None
 
 # ==================== 特征工程 ====================
 class FeatureEngineering:
@@ -82,43 +107,34 @@ class FeatureEngineering:
     def __init__(self):
         self.numeric_features = []
         self.categorical_features = []
-        self.numeric_transformer = None
-        self.categorical_transformer = None
         self.preprocessor = None
         self.feature_names = []
-        self.scaler = None
         
     def identify_features(self, df):
         """识别数值和类别特征"""
-        # 获取数据中实际存在的特征
-        numeric = []
-        categorical = []
+        self.numeric_features = df.select_dtypes(include=[np.number]).columns.tolist()
         
-        for col in Config.NUMERIC_FEATURES:
-            if col in df.columns:
-                numeric.append(col)
+        # 排除ID和目标变量
+        exclude_cols = ['Id', Config.TARGET]
+        self.numeric_features = [c for c in self.numeric_features if c not in exclude_cols]
         
-        for col in Config.CATEGORICAL_FEATURES:
-            if col in df.columns:
-                categorical.append(col)
+        self.categorical_features = df.select_dtypes(include=['object', 'category']).columns.tolist()
         
-        self.numeric_features = numeric
-        self.categorical_features = categorical
-        print(f"\n数值特征: {len(numeric)} 个")
-        print(f"类别特征: {len(categorical)} 个")
+        print(f"\n数值特征: {len(self.numeric_features)} 个")
+        print(f"类别特征: {len(self.categorical_features)} 个")
         
     def fit(self, X):
         """训练特征预处理器"""
         print("\n特征工程 - 训练预处理器...")
         
         # 数值特征: 缺失值用中位数填充 + 标准化
-        self.numeric_transformer = Pipeline(steps=[
+        numeric_transformer = Pipeline(steps=[
             ('imputer', SimpleImputer(strategy='median')),
             ('scaler', StandardScaler())
         ])
         
         # 类别特征: 缺失值用众数填充 + 独热编码
-        self.categorical_transformer = Pipeline(steps=[
+        categorical_transformer = Pipeline(steps=[
             ('imputer', SimpleImputer(strategy='most_frequent')),
             ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False))
         ])
@@ -126,35 +142,27 @@ class FeatureEngineering:
         # 组合预处理器
         self.preprocessor = ColumnTransformer(
             transformers=[
-                ('num', self.numeric_transformer, self.numeric_features),
-                ('cat', self.categorical_transformer, self.categorical_features)
+                ('num', numeric_transformer, self.numeric_features),
+                ('cat', categorical_transformer, self.categorical_features)
             ],
             remainder='drop'
         )
         
-        # 训练预处理器
         self.preprocessor.fit(X)
-        
-        # 获取特征名称
         self._get_feature_names()
         print(f"总特征数量: {len(self.feature_names)}")
         
     def _get_feature_names(self):
         """获取处理后的特征名称"""
-        self.feature_names = []
+        self.feature_names = list(self.numeric_features)
         
-        # 数值特征名称
-        self.feature_names.extend(self.numeric_features)
-        
-        # 独热编码后的类别特征名称
         cat_encoder = self.preprocessor.named_transformers_['cat'].named_steps['onehot']
         cat_feature_names = cat_encoder.get_feature_names_out(self.categorical_features)
         self.feature_names.extend(cat_feature_names.tolist())
         
     def transform(self, X):
         """转换数据"""
-        X_transformed = self.preprocessor.transform(X)
-        return X_transformed
+        return self.preprocessor.transform(X)
     
     def fit_transform(self, X):
         """训练并转换"""
@@ -210,13 +218,12 @@ class ModelTrainer:
             )
         }
     
-    def train_all(self, X, y, X_val=None, y_val=None):
+    def train_all(self, X, y):
         """训练所有模型并对比"""
         print("\n" + "="*60)
         print("多模型对比训练")
         print("="*60)
         
-        # 对数变换目标变量
         y_log = np.log1p(y)
         
         kf = KFold(n_splits=Config.N_FOLDS, shuffle=True, random_state=Config.RANDOM_STATE)
@@ -225,36 +232,31 @@ class ModelTrainer:
         for name, model in self.models.items():
             print(f"\n训练 {name}...")
             
-            # K折交叉验证
             cv_scores = []
             cv_r2_scores = []
+            
+            from sklearn.base import clone
             
             for fold, (train_idx, val_idx) in enumerate(kf.split(X)):
                 X_train, X_val = X[train_idx], X[val_idx]
                 y_train, y_val_fold = y_log.iloc[train_idx], y_log.iloc[val_idx]
                 
-                # 克隆模型
-                from sklearn.base import clone
                 model_clone = clone(model)
                 
-                # 训练
                 if 'XGBoost' in name:
                     model_clone.fit(X_train, y_train, eval_set=[(X_val, y_val_fold)], verbose=False)
                 else:
                     model_clone.fit(X_train, y_train)
                 
-                # 预测
                 pred_log = model_clone.predict(X_val)
                 pred = np.expm1(pred_log)
                 y_val_orig = np.expm1(y_val_fold)
                 
-                # 计算 RMSE
                 rmse = np.sqrt(mean_squared_error(y_val_orig, pred))
                 r2 = r2_score(y_val_orig, pred)
                 cv_scores.append(rmse)
                 cv_r2_scores.append(r2)
             
-            # 存储结果
             self.results[name] = {
                 'cv_rmse_mean': np.mean(cv_scores),
                 'cv_rmse_std': np.std(cv_scores),
@@ -265,9 +267,7 @@ class ModelTrainer:
             print(f"  RMSE: {np.mean(cv_scores):,.2f} (+/- {np.std(cv_scores):,.2f})")
             print(f"  R²: {np.mean(cv_r2_scores):.4f}")
         
-        # 找出最佳模型
         self._find_best_model()
-        
         return self.results
     
     def _find_best_model(self):
@@ -300,7 +300,6 @@ class ModelTrainer:
     
     def save_results(self, path):
         """保存训练结果"""
-        # 移除模型对象，只保存指标
         results_to_save = {}
         for name, result in self.results.items():
             results_to_save[name] = {
@@ -320,17 +319,10 @@ class ModelTrainer:
         """保存训练好的模型"""
         os.makedirs(path, exist_ok=True)
         
-        # 保存最佳模型
         import joblib
         best_model_path = os.path.join(path, 'best_model.pkl')
         joblib.dump(self.best_model, best_model_path)
         print(f"最佳模型已保存: {best_model_path}")
-        
-        # 保存所有模型
-        all_models_path = os.path.join(path, 'all_models.pkl')
-        with open(all_models_path, 'wb') as f:
-            pickle.dump(self.models, f)
-        print(f"所有模型已保存: {all_models_path}")
 
 # ==================== SHAP分析 ====================
 class SHAPExplainer:
@@ -352,34 +344,25 @@ class SHAPExplainer:
         try:
             import shap
             
-            # XGBoost模型
             if 'XGBRegressor' in str(type(model)):
                 self.explainer = shap.TreeExplainer(model)
                 self.shap_values = self.explainer.shap_values(X_sample)
-            
-            # 其他模型使用KernelExplainer
-            else:
-                def predict_wrapper(x):
-                    return model.predict(x)
-                self.explainer = shap.KernelExplainer(predict_wrapper, X_sample[:100])
-                self.shap_values = self.explainer.shap_values(X_sample[:100])
-            
-            print("SHAP 分析完成!")
-            return True
+                print("SHAP 分析完成!")
+                return True
             
         except ImportError:
             print("SHAP 未安装，跳过可解释性分析")
             print("安装命令: pip install shap")
-            return False
+        
+        return False
     
-    def get_feature_importance(self, X_sample=None):
+    def get_feature_importance(self):
         """获取特征重要性"""
         if self.shap_values is None:
             return None
         
         import shap
         
-        # 计算平均绝对SHAP值
         feature_importance = np.abs(self.shap_values).mean(axis=0)
         importance_df = pd.DataFrame({
             'feature': self.feature_names,
@@ -390,31 +373,9 @@ class SHAPExplainer:
         print(importance_df.head(10).to_string(index=False))
         
         return importance_df
-    
-    def save_analysis(self, path, X_sample=None):
-        """保存SHAP分析结果"""
-        if self.shap_values is None:
-            return
-        
-        import shap
-        
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        
-        # 保存特征重要性
-        importance_df = self.get_feature_importance()
-        importance_df.to_csv(os.path.join(path, 'feature_importance.csv'), index=False)
-        
-        # 保存SHAP摘要图
-        plt = shap.summary_plot(self.shap_values, X_sample, feature_names=self.feature_names, show=False)
-        import matplotlib.pyplot as plt
-        plt.savefig(os.path.join(path, 'shap_summary.png'), dpi=150, bbox_inches='tight')
-        plt.close()
-        
-        print(f"SHAP分析结果已保存: {path}")
 
 # ==================== 主程序 ====================
 def main():
-    # 创建模型目录
     os.makedirs(Config.MODEL_PATH, exist_ok=True)
     
     # 加载数据
@@ -443,11 +404,15 @@ def main():
     # SHAP分析
     shap_analyzer = SHAPExplainer()
     if shap_analyzer.create_explainer(trainer.best_model, X_transformed[:100], fe.feature_names):
-        shap_analyzer.save_analysis(os.path.join(Config.MODEL_PATH, 'shap'))
+        shap_analyzer.get_feature_importance()
     
     print("\n" + "="*60)
     print("训练完成!")
     print("="*60)
+    print("\n下一步:")
+    print("1. pip install flask shap")
+    print("2. python app.py")
+    print("3. 访问 http://127.0.0.1:5000")
 
 if __name__ == '__main__':
     main()
