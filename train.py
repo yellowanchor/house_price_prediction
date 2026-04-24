@@ -1,7 +1,6 @@
 """
 房价预测模型 - 完整版
 特征工程 + 多模型对比 + SHAP可解释性 + Flask Web应用
-官方Kaggle数据获取
 """
 
 import pandas as pd
@@ -30,9 +29,37 @@ class Config:
     RANDOM_STATE = 42
     N_FOLDS = 5
 
-# ==================== 数据加载（官方Kaggle方法）====================
+# ==================== 数据下载 ====================
+def download_kaggle_data():
+    """从Kaggle下载数据"""
+    # 设置认证信息
+    os.environ['KAGGLE_USERNAME'] = 'yellowanchor42'
+    os.environ['KAGGLE_KEY'] = 'KGAT_c0b895c9f7a8df34f09dd1a3aa481202'
+    
+    try:
+        from kaggle.api.kaggle_api_extended import KaggleApi
+        
+        print("正在从 Kaggle 下载数据...")
+        api = KaggleApi()
+        api.authenticate()
+        
+        # 下载竞赛数据
+        api.competition_download_files(
+            'house-prices-advanced-regression-techniques',
+            path=Config.DATA_PATH,
+            unzip=True
+        )
+        
+        print("下载完成!")
+        return True
+        
+    except Exception as e:
+        print(f"Kaggle 下载失败: {e}")
+        return False
+
+# ==================== 数据加载 ====================
 def load_data():
-    """使用kagglehub官方方法加载数据"""
+    """加载训练集和测试集"""
     print("="*60)
     print("房价预测模型 - 完整版")
     print("="*60)
@@ -49,56 +76,19 @@ def load_data():
             print(f"测试集: {test_df.shape}")
         return train_df, test_df
     
-    # 使用 kagglehub 官方方法下载
-    print("\n使用 KaggleHub 官方方法下载数据...")
-    
-    try:
-        import kagglehub
-        
-        # 方法1: 下载竞赛数据
-        print("下载 Kaggle House Prices 竞赛数据...")
-        path = kagglehub.competition_download('house-prices-advanced-regression-techniques')
-        
-        # 查找下载的文件
-        files = os.listdir(path)
-        print(f"下载完成，文件列表: {files}")
-        
-        # 加载数据
-        train_file = os.path.join(path, 'train.csv')
-        test_file = os.path.join(path, 'test.csv')
-        
-        if os.path.exists(train_file):
-            train_df = pd.read_csv(train_file)
-            test_df = pd.read_csv(test_file) if os.path.exists(test_file) else None
-            print(f"\n训练集: {train_df.shape}")
-            if test_df is not None:
-                print(f"测试集: {test_df.shape}")
+    # 尝试从 Kaggle 下载
+    print("\n本地数据不存在，尝试从 Kaggle 下载...")
+    if download_kaggle_data():
+        if os.path.exists(train_path):
+            train_df = pd.read_csv(train_path)
+            test_df = pd.read_csv(test_path) if os.path.exists(test_path) else None
             return train_df, test_df
-        
-        raise FileNotFoundError("train.csv not found in downloaded files")
-        
-    except ImportError:
-        print("kagglehub 未安装，安装中...")
-        os.system('pip install kagglehub')
-        return load_data()
-        
-    except Exception as e:
-        print(f"KaggleHub 下载失败: {e}")
-        print("\n" + "="*60)
-        print("请确保已完成以下配置：")
-        print("1. 安装 kaggle 包: pip install kagglehub")
-        print("2. 配置 Kaggle 认证:")
-        print("   - 访问 https://www.kaggle.com/account")
-        print("   - 点击 'Create New API Token' 下载 kaggle.json")
-        print("   - Windows: 放置到 C:\\Users\\<用户名>\\.kaggle\\kaggle.json")
-        print("   - Linux/Mac: 放置到 ~/.kaggle/kaggle.json")
-        print("="*60)
-        
-        # 备用方案：使用 OpenML
-        print("\n使用备用数据源 OpenML...")
-        from sklearn.datasets import fetch_openml
-        housing = fetch_openml(name="house_prices", as_frame=True, parser='auto')
-        return housing.frame, None
+    
+    # 备用方案：使用 OpenML
+    print("\n使用备用数据源 OpenML...")
+    from sklearn.datasets import fetch_openml
+    housing = fetch_openml(name="house_prices", as_frame=True, parser='auto')
+    return housing.frame, None
 
 # ==================== 特征工程 ====================
 class FeatureEngineering:
@@ -114,7 +104,6 @@ class FeatureEngineering:
         """识别数值和类别特征"""
         self.numeric_features = df.select_dtypes(include=[np.number]).columns.tolist()
         
-        # 排除ID和目标变量
         exclude_cols = ['Id', Config.TARGET]
         self.numeric_features = [c for c in self.numeric_features if c not in exclude_cols]
         
@@ -127,19 +116,16 @@ class FeatureEngineering:
         """训练特征预处理器"""
         print("\n特征工程 - 训练预处理器...")
         
-        # 数值特征: 缺失值用中位数填充 + 标准化
         numeric_transformer = Pipeline(steps=[
             ('imputer', SimpleImputer(strategy='median')),
             ('scaler', StandardScaler())
         ])
         
-        # 类别特征: 缺失值用众数填充 + 独热编码
         categorical_transformer = Pipeline(steps=[
             ('imputer', SimpleImputer(strategy='most_frequent')),
             ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False))
         ])
         
-        # 组合预处理器
         self.preprocessor = ColumnTransformer(
             transformers=[
                 ('num', numeric_transformer, self.numeric_features),
@@ -252,6 +238,11 @@ class ModelTrainer:
                 pred = np.expm1(pred_log)
                 y_val_orig = np.expm1(y_val_fold)
                 
+                # 移除无穷大和NaN值
+                valid_mask = np.isfinite(pred) & np.isfinite(y_val_orig)
+                pred = pred[valid_mask]
+                y_val_orig = y_val_orig[valid_mask]
+                
                 rmse = np.sqrt(mean_squared_error(y_val_orig, pred))
                 r2 = r2_score(y_val_orig, pred)
                 cv_scores.append(rmse)
@@ -265,7 +256,7 @@ class ModelTrainer:
             }
             
             print(f"  RMSE: {np.mean(cv_scores):,.2f} (+/- {np.std(cv_scores):,.2f})")
-            print(f"  R²: {np.mean(cv_r2_scores):.4f}")
+            print(f"  R2: {np.mean(cv_r2_scores):.4f}")
         
         self._find_best_model()
         return self.results
@@ -289,13 +280,13 @@ class ModelTrainer:
         print("\n" + "="*60)
         print("模型对比结果汇总")
         print("="*60)
-        print(f"{'模型':<25} {'RMSE':<15} {'R²':<10}")
+        print(f"{'模型':<25} {'RMSE':<15} {'R2':<10}")
         print("-"*50)
         
         sorted_results = sorted(self.results.items(), key=lambda x: x[1]['cv_rmse_mean'])
         
         for name, result in sorted_results:
-            marker = "⭐" if name == self.best_model_name else "  "
+            marker = "[*]" if name == self.best_model_name else "   "
             print(f"{marker}{name:<23} {result['cv_rmse_mean']:>12,.2f}  {result['cv_r2_mean']:.4f}")
     
     def save_results(self, path):
@@ -333,7 +324,7 @@ class SHAPExplainer:
         self.shap_values = None
         self.feature_names = None
         
-    def create_explainer(self, model, X_sample, feature_names):
+    def create_explainer(self, model, X_sample, feature_names, y=None):
         """创建SHAP解释器"""
         print("\n" + "="*60)
         print("SHAP 可解释性分析")
@@ -345,7 +336,20 @@ class SHAPExplainer:
             import shap
             
             if 'XGBRegressor' in str(type(model)):
-                self.explainer = shap.TreeExplainer(model)
+                # 重新训练一个XGBoost模型用于SHAP分析
+                print("训练XGBoost模型用于SHAP分析...")
+                xgb_for_shap = xgb.XGBRegressor(
+                    n_estimators=500, max_depth=5, learning_rate=0.05,
+                    subsample=0.8, colsample_bytree=0.8,
+                    random_state=Config.RANDOM_STATE, n_jobs=-1
+                )
+                if y is not None:
+                    y_log = np.log1p(y)
+                    xgb_for_shap.fit(X_sample, y_log.iloc[:X_sample.shape[0]])
+                else:
+                    xgb_for_shap.fit(X_sample)
+                
+                self.explainer = shap.TreeExplainer(xgb_for_shap)
                 self.shap_values = self.explainer.shap_values(X_sample)
                 print("SHAP 分析完成!")
                 return True
@@ -403,7 +407,7 @@ def main():
     
     # SHAP分析
     shap_analyzer = SHAPExplainer()
-    if shap_analyzer.create_explainer(trainer.best_model, X_transformed[:100], fe.feature_names):
+    if shap_analyzer.create_explainer(trainer.best_model, X_transformed[:100], fe.feature_names, y):
         shap_analyzer.get_feature_importance()
     
     print("\n" + "="*60)
